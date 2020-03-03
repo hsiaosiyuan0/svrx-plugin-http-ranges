@@ -57,11 +57,12 @@ async function onRoute(ctx, next) {
     return next();
   }
 
-  to = to === -1 ? fstat.size : to;
+  to = to === -1 ? fstat.size - 1 : to;
   const len = to - from + 1;
   const buf = Buffer.alloc(to - from + 1);
   const [read, err2] = await go(fd.read(buf, 0, len, from));
-  if (err2 || read < len) {
+  const { bytesRead } = read;
+  if (err2 || bytesRead < len) {
     console.log("failed to read file: " + file);
     console.error(err2);
     fd.close();
@@ -72,10 +73,10 @@ async function onRoute(ctx, next) {
 
   ctx.response.status = 206;
   ctx.response.set("Content-Range", `bytes ${from}-${to}/${fstat.size}`);
-  ctx.response.set("Content-Length", read);
+  ctx.response.set("Content-Length", bytesRead);
   ctx.body = buf;
 
-  console.log("succeed to process ranges");
+  console.log("succeed to process ranges: " + bytesRead);
   return null;
 }
 
