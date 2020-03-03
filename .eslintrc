@@ -1,0 +1,17 @@
+{
+    "extends": "@svrx",
+    "rules": {
+        "quotes": 0,
+        "comma-dangle": 0,
+        "no-constant-condition": 0,
+        "no-cond-assign": 0,
+        "arrow-parens": 0,
+        "prefer-const": [
+            "error",
+            {
+                "destructuring": "all"
+            }
+        ],
+        "prefer-template": 0
+    }
+}
