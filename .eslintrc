@@ -12,6 +12,15 @@
                 "destructuring": "all"
             }
         ],
-        "prefer-template": 0
+        "prefer-template": 0,
+        "no-shadow": 0,
+        "max-classes-per-file": 0,
+        "no-plusplus": 0,
+        "no-bitwise": 0,
+        "import/extensions": 0,
+        "import/prefer-default-export": 0,
+        "class-methods-use-this": 0,
+        "object-curly-newline": 0,
+        "no-await-in-loop": 0
     }
 }

@@ -76,13 +76,10 @@ async function onRoute(ctx, next) {
   ctx.response.set("Access-Control-Allow-Origin", "*");
   ctx.response.set("Access-Control-Allow-Credentials", "true");
 
-  ctx.response.set(
-    "Access-Control-Allow-Headers",
-    "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range"
-  );
+  ctx.response.set("Access-Control-Allow-Headers", "Content-Type,Range");
   ctx.response.set(
     "Access-Control-Expose-Headers",
-    "Content-Range, Last-Modified"
+    "Content-Range, Content-Type"
   );
   ctx.response.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
 
