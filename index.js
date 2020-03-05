@@ -62,7 +62,7 @@ async function onRoute(ctx, next) {
   const buf = Buffer.alloc(to - from + 1);
   const [read, err2] = await go(fd.read(buf, 0, len, from));
   const { bytesRead } = read;
-  if (err2 || bytesRead < len) {
+  if (err2) {
     console.log("failed to read file: " + file);
     console.error(err2);
     fd.close();
@@ -72,9 +72,25 @@ async function onRoute(ctx, next) {
   fd.close();
 
   ctx.response.status = 206;
-  ctx.response.set("Content-Range", `bytes ${from}-${to}/${fstat.size}`);
-  ctx.response.set("Content-Length", bytesRead);
-  ctx.body = buf;
+
+  ctx.response.set("Access-Control-Allow-Origin", "*");
+  ctx.response.set("Access-Control-Allow-Credentials", "true");
+
+  ctx.response.set(
+    "Access-Control-Allow-Headers",
+    "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range"
+  );
+  ctx.response.set(
+    "Access-Control-Expose-Headers",
+    "Content-Range, Last-Modified"
+  );
+  ctx.response.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+
+  ctx.response.set(
+    "Content-Range",
+    `bytes ${from}-${from + bytesRead - 1}/${fstat.size}`
+  );
+  ctx.body = buf.slice(0, bytesRead);
 
   console.log("succeed to process ranges: " + bytesRead);
   return null;
