@@ -1,6 +1,6 @@
 {
   "name": "svrx-plugin-http-ranges",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Handle the requests passed by HTTP Ranges",
   "main": "index.js",
   "keywords": [
