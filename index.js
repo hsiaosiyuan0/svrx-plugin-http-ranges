@@ -73,13 +73,13 @@ async function onRoute(ctx, next) {
 
   ctx.response.status = 206;
 
-  ctx.response.set("Access-Control-Allow-Origin", "*");
+  ctx.response.set("Access-Control-Allow-Origin", ctx.request.origin);
   ctx.response.set("Access-Control-Allow-Credentials", "true");
 
   ctx.response.set("Access-Control-Allow-Headers", "Content-Type,Range");
   ctx.response.set(
     "Access-Control-Expose-Headers",
-    "Content-Range, Content-Type"
+    "Origin, Content-Range, Content-Type"
   );
   ctx.response.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
 
@@ -89,7 +89,9 @@ async function onRoute(ctx, next) {
   );
   ctx.body = buf.slice(0, bytesRead);
 
-  console.log("succeed to process ranges: " + bytesRead);
+  console.log(
+    `succeed to process ranges: ${rawRanges}, read ${bytesRead} bytes`
+  );
   return null;
 }
 

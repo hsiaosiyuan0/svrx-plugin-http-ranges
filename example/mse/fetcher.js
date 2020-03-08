@@ -1,5 +1,5 @@
 import { ReadWriteBuffer } from "./buffer.js";
-import { Box } from "./box.js";
+import * as Decoder from "./box/decode.js";
 import { go } from "./util.js";
 
 const rRange = /(\d+)-(\d+)\/(\d+)/;
@@ -36,16 +36,21 @@ export class Fetcher {
     this.sb.addEventListener("updateend", () => {
       if (!this.sb.updating && ms.readyState === "open") ms.endOfStream();
     });
+
+    this.size = 0;
+    this.topBoxesSizeInfo = {};
   }
 
-  async _indicateMoov() {
+  async _indicateMoovMdat() {
     const times = 10;
     const buf = new ReadWriteBuffer();
-    const box = new Box();
 
     let from = 0;
     let to = 8;
     let i = times;
+
+    let moov;
+    let mdat;
     while (i) {
       const [{ begin, end, total, bytes }, err] = await fetchRange({
         from,
@@ -55,10 +60,19 @@ export class Fetcher {
       if (err) return [undefined, err];
 
       buf.append(bytes);
-      box.fulfill(buf, true);
+      const box = new Decoder.Box(buf, true);
+
+      this.size = total;
+      const sizeInfo = { from: begin, to: begin + box.size, size: box.size };
       if (box.boxtype === "moov") {
-        return [{ from: begin, to: begin + box.size, total }, undefined];
+        moov = sizeInfo;
+      } else if (box.boxtype === "mdat") {
+        mdat = sizeInfo;
       }
+
+      this.topBoxesSizeInfo[box.boxtype] = sizeInfo;
+
+      if (moov && mdat) return [{ moov, mdat }, undefined];
 
       if (total === end + 1) {
         return [undefined, new Error("No Moov info in file")];
@@ -72,6 +86,23 @@ export class Fetcher {
     return [undefined, new Error(`No Moov info in file after ${times} times`)];
   }
 
+  async _processMoov() {
+    // load and parse moov box according the box head info
+    // gains by `_indicateMoovMdat`
+    const { from, to } = this.topBoxesSizeInfo.moov;
+    const buf = new ReadWriteBuffer();
+    const [{ bytes }, err] = await fetchRange({
+      from,
+      to,
+      url: this.url
+    });
+    if (err) return [undefined, err];
+
+    buf.append(bytes);
+
+    return new Decoder.Box(buf);
+  }
+
   _fetch(from, to) {
     fetch(this.url, {
       headers: {
@@ -79,20 +110,22 @@ export class Fetcher {
       }
     })
       .then(resp => {
-        console.log(resp);
+        // console.log(resp);
         resp.arrayBuffer();
       })
       .then(ab => {
         this.buf.append(new Uint8Array(ab));
-        const box = new Box();
+        const box = new Decoder.Box();
         box.fulfill(this.buf);
-        console.log(box);
+        // console.log(box);
       });
   }
 
   async load() {
     // this._fetch(0, 900);
-    const [{ from, to, total } = {}, err] = await this._indicateMoov();
-    console.log(from, to, total, err);
+    await this._indicateMoovMdat();
+    const moov = await this._processMoov();
+    Decoder.samples(moov, 1);
+    // console.log(this.topBoxesSizeInfo);
   }
 }
